@@ -1,0 +1,37 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  poroConsolidationFoam example case: Terzaghi 1D consolidation
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    location    "0";
+    object      u;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Excess pore pressure normalized by the applied load (u / u0).
+
+dimensions      [0 0 0 0 0 0 0];
+
+internalField   uniform 1;
+
+boundaryField
+{
+    drained
+    {
+        type            fixedValue;
+        value           uniform 0;
+    }
+    impermeable
+    {
+        type            zeroGradient;
+    }
+    sides
+    {
+        type            empty;
+    }
+}
+
+// ************************************************************************* //

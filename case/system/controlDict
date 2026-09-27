@@ -1,0 +1,38 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  poroConsolidationFoam example case: Terzaghi 1D consolidation
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     poroConsolidationFoam;
+
+startFrom       startTime;
+startTime       0;
+stopAt          endTime;
+endTime         80;
+
+deltaT          0.25;
+
+// Write every 5 s of simulated time. With cv = 0.01 m^2/s and H = 1 m,
+// Tv = cv*t/H^2 = 0.01*t, so the output includes t = 5, 10, 20, 40, 80,
+// i.e. Tv = 0.05, 0.1, 0.2, 0.4, 0.8, the time factors used in
+// validation/terzaghi_analytical.py.
+writeControl    runTime;
+writeInterval   5;
+
+purgeWrite      0;
+writeFormat     ascii;
+writePrecision  10;
+writeCompression off;
+timeFormat      general;
+timePrecision   6;
+runTimeModifiable true;
+
+// ************************************************************************* //

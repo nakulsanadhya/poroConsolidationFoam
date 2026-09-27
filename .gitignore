@@ -1,0 +1,18 @@
+# verify.py working directories
+runs/
+
+# Python
+__pycache__/
+*.pyc
+
+# Output from running the template case by hand (keep only the inputs)
+case/constant/polyMesh/*
+!case/constant/polyMesh/blockMeshDict
+case/[1-9]*/
+case/0.*/
+case/log.*
+
+# wmake build output
+solver/Make/linux64*/
+solver/*.dep
+solver/lnInclude/

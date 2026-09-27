@@ -1,0 +1,32 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  poroConsolidationFoam example case: Terzaghi 1D consolidation
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+    "(u|T)"
+    {
+        solver          PCG;
+        preconditioner  DIC;
+        tolerance       1e-12;
+        relTol          0;
+    }
+}
+
+// Read only by the stock laplacianFoam used for cross-checking;
+// poroConsolidationFoam ignores it. Orthogonal mesh, so 0 correctors.
+SIMPLE
+{
+    nNonOrthogonalCorrectors 0;
+}
+
+// ************************************************************************* //
