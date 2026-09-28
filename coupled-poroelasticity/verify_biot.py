@@ -57,9 +57,9 @@ TEMPLATE = HERE / "case"
 RUNS = HERE / "runs"
 OUT = HERE / "validation"
 sys.path.insert(0, str(HERE / "reference"))
-sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "pressure-diffusion"))
 from biot_ref import Params, exact, exact_settlement, simulate, ConvergenceError, validate_inputs  # noqa: E402
-import verify as v1  # noqa: E402  (Phase 1 helpers: environment, time dirs, field and mesh readers)
+import verify as v1  # noqa: E402  (pressure-diffusion helpers: environment, time dirs, field and mesh readers)
 
 SOLVER = "biotConsolidationFoam"
 

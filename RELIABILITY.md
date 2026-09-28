@@ -3,13 +3,13 @@
 ## Evidence and status
 
 The baseline C++ solver compiled and ran on Nakul's foam-extend 4.1 workstation.
-Its supplied `biot/phase2-all.log` and four figures directly in `biot/validation/`
+Its supplied `coupled-poroelasticity/phase2-all.log` and four figures directly in `coupled-poroelasticity/validation/`
 are preserved unchanged. They verify the baseline, not this revised C++ source.
 
 This revision's Python `check`, `reliability` and full `all` study passed locally.
-See `biot/validation/reference/reliability-all.log`. The revised C++ solver subsequently compiled and passed check, reliability,
+See `coupled-poroelasticity/validation/reference/reliability-all.log`. The revised C++ solver subsequently compiled and passed check, reliability,
 and all studies on Nakul's foam-extend 4.1 workstation on 2026-09-27.
-See `biot/reliability-all.log` and `biot/validation/biotConsolidationFoam/`.
+See `coupled-poroelasticity/reliability-all.log` and `coupled-poroelasticity/validation/biotConsolidationFoam/`.
 
 | Evidence | Result |
 | --- | --- |
@@ -90,20 +90,20 @@ Requires foam-extend 4.1 for C++, plus Python 3 with numpy, scipy and matplotlib
 
 ```bash
 set -o pipefail
-(cd biot/solver && wmake) 2>&1 | tee biot/reliability-build.log
+(cd coupled-poroelasticity/solver && wmake) 2>&1 | tee coupled-poroelasticity/reliability-build.log
 # Stop here if compilation fails.
-bash tools/run-python biot/verify_biot.py check 2>&1 | tee biot/reliability-check.log
-bash tools/run-python biot/verify_biot.py reliability 2>&1 | tee biot/reliability-tests.log
+bash tools/run-python coupled-poroelasticity/verify_biot.py check 2>&1 | tee coupled-poroelasticity/reliability-check.log
+bash tools/run-python coupled-poroelasticity/verify_biot.py reliability 2>&1 | tee coupled-poroelasticity/reliability-tests.log
 # Run after those quick gates pass:
-bash tools/run-python biot/verify_biot.py all 2>&1 | tee biot/reliability-all.log
+bash tools/run-python coupled-poroelasticity/verify_biot.py all 2>&1 | tee coupled-poroelasticity/reliability-all.log
 ```
 
 Without OpenFOAM:
 
 ```bash
-bash tools/run-python biot/verify_biot.py check --solver reference
-bash tools/run-python biot/verify_biot.py reliability --solver reference
-bash tools/run-python biot/verify_biot.py all --solver reference
+bash tools/run-python coupled-poroelasticity/verify_biot.py check --solver reference
+bash tools/run-python coupled-poroelasticity/verify_biot.py reliability --solver reference
+bash tools/run-python coupled-poroelasticity/verify_biot.py all --solver reference
 ```
 
 Quick Python gates take seconds in the available environment. The full study
@@ -154,3 +154,12 @@ stabilization is implemented.
 
 After these gates pass, a separate 2D Mandel benchmark is a reasonable next
 milestone. It is not part of this update.
+
+## Folder locations
+
+The pressure-only example is in `pressure-diffusion/`; the coupled example is in
+`coupled-poroelasticity/`. The coupled verification script imports the existing
+file-reading and environment helpers from `pressure-diffusion/verify.py`.
+Moving these files did not change the solver equations or executable names.
+Historical logs and run manifests retain the paths and source hashes recorded
+when they were generated. Those records are preserved, not rewritten as new runs.

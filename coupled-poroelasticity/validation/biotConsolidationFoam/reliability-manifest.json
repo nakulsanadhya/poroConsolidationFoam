@@ -1,0 +1,29 @@
+{
+  "timestamp_utc": "2026-09-28T19:57:02.382359+00:00",
+  "argv": [
+    "coupled-poroelasticity/verify_biot.py",
+    "reliability"
+  ],
+  "backend": "biotConsolidationFoam",
+  "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "numpy": "1.26.4",
+  "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.39",
+  "WM_PROJECT_VERSION": "4.1",
+  "OF_BASHRC": "/home/nakul/foam/foam-extend-4.1/etc/bashrc",
+  "status": "completed",
+  "source_sha256": {
+    "coupled-poroelasticity/reference/biot_ref.py": "1eb336b808cb8688b7d3511b2ca2bac80ccf86c266e9340475b490e96f8f9fb1",
+    "coupled-poroelasticity/solver/biotConsolidationFoam.C": "93a7e10f23c508496aa0aa5a1d03fc464757002f8a6e493541d9798f4a9c9665",
+    "coupled-poroelasticity/solver/createFields.H": "627abf2bb8c59e60cd85c0e57f45ce60469c64953fed7b1a10acddfc11f47d20",
+    "coupled-poroelasticity/solver/equationResiduals.H": "d353b81644e50852aabad1108870e49348da329c4960eb6a14fe1c061031ae29",
+    "coupled-poroelasticity/solver/massBalance.H": "fad4591fc7821b2e3e9add883bf62e782c4d6686b85852766a7c3aad28f86da7",
+    "coupled-poroelasticity/solver/pEqn.H": "6dc09e66257f73d3cb80b309d21fa5d3ea7e621d4dfb729fec8ae5766a676ae3",
+    "coupled-poroelasticity/solver/validateCase.H": "a1030114a759213ab849018c2bbc8de046aca52ecd3b3d292c33911f89ce6a9c",
+    "coupled-poroelasticity/solver/wEqn.H": "2bd5542d8e6fc901902289724432ca5c8bffdae2fa037de5d5759bf716127f2e",
+    "coupled-poroelasticity/verify_biot.py": "15d798c22779295c8a28e4732397eda82e7cbcb5d7dbbdc787ae170dc3ac4ca3"
+  },
+  "executable": "/home/nakul/foam/nakul-4.1/applications/bin/linux64GccDPInt32Opt/biotConsolidationFoam",
+  "executable_sha256": "0e39e014de92987df749ce26360eb1e204ceb14594515861dc47e9296b61e72a",
+  "git_commit": "40f497df42d0cfc11bc064023b57566482ec09fc",
+  "elapsed_seconds": 2.1837504729628563
+}

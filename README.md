@@ -19,7 +19,7 @@ Both solvers have been compiled and tested on foam-extend 4.1. The tests cover a
 
 The coupled solver reproduces the analytical pressure and settlement histories. For the default case, the top settles from an instantaneous undrained value of 4.39 mm toward a drained value of 10 mm.
 
-![Pressure, displacement and settlement compared with the analytical solution](biot/validation/biotConsolidationFoam/biot_vs_exact.png)
+![Pressure, displacement and settlement compared with the analytical solution](coupled-poroelasticity/validation/biotConsolidationFoam/biot_vs_exact.png)
 
 For 100 cells and a time step of 0.25 s:
 
@@ -33,7 +33,7 @@ For 100 cells and a time step of 0.25 s:
 
 Refining the mesh gives approximately second-order accuracy in space. Refining the time step gives first-order accuracy in time. The coupled solver's mesh study uses Richardson extrapolation in time to separate spatial error from time-step error.
 
-![Mesh and time-step refinement for pressure and displacement](biot/validation/biotConsolidationFoam/biot_convergence.png)
+![Mesh and time-step refinement for pressure and displacement](coupled-poroelasticity/validation/biotConsolidationFoam/biot_convergence.png)
 
 The tests also compare the fixed-stress solution with a monolithic reference solve, check that restarting reproduces an uninterrupted run, and confirm that failed iterations and incomplete results are rejected. These results establish performance for the tested one-dimensional cases, rather than for general poromechanics problems.
 
@@ -43,13 +43,13 @@ The most interesting part of the project was testing the coupled solver with nea
 
 With pressure and displacement stored at cell centres, the discrete coupling responds weakly to rapidly alternating pressure patterns. In the tested cases, this produced pressure oscillations and slow fixed-stress convergence. Adding a pressure stabilization term suppressed the oscillations and reduced the iteration count.
 
-![Early-time pressure profiles with and without stabilization](biot/validation/biotConsolidationFoam/biot_oscillations.png)
+![Early-time pressure profiles with and without stabilization](coupled-poroelasticity/validation/biotConsolidationFoam/biot_oscillations.png)
 
 In one early-time test, the unstabilized pressure exceeded the initial pressure by 12.5%. Across the stabilized early-time tests, the overshoot was about 1.7 × 10⁻¹¹ or less of the initial pressure. In a separate three-step comparison, stabilization reduced the average iteration count from 758.3 to 18.0.
 
 Some choices of the fixed-stress parameter still failed to converge within the iteration limit. Those results are marked `NC` in the parameter study; the solver stops rather than continuing with an unconverged solution.
 
-This is an investigation of a known class of discretization problems, not a claim of a new stabilization method. The derivation and its limits are described in the [coupled-solver notes](biot/README.md).
+This is an investigation of a known class of discretization problems, not a claim of a new stabilization method. The derivation and its limits are described in the [coupled-solver notes](coupled-poroelasticity/README.md).
 
 ## Build and run
 
@@ -60,32 +60,32 @@ Source your foam-extend environment, then run these commands from the repository
 Build both solvers:
 
 ```bash
-(cd solver && wmake)
-(cd biot/solver && wmake)
+(cd pressure-diffusion/solver && wmake)
+(cd coupled-poroelasticity/solver && wmake)
 ```
 
 Check the pressure-only solver against the analytical solution:
 
 ```bash
-bash tools/run-python verify.py check
+bash tools/run-python pressure-diffusion/verify.py check
 ```
 
 Check the coupled solver against the analytical solution and the Python reference, including equation residuals and fluid balance:
 
 ```bash
-bash tools/run-python biot/verify_biot.py check
+bash tools/run-python coupled-poroelasticity/verify_biot.py check
 ```
 
 Check restart behavior, agreement with a monolithic solve, and rejection of failed or invalid runs:
 
 ```bash
-bash tools/run-python biot/verify_biot.py reliability
+bash tools/run-python coupled-poroelasticity/verify_biot.py reliability
 ```
 
 Run the full coupled-solver study, including mesh refinement, time-step refinement, pressure oscillations, and the fixed-stress parameter scan:
 
 ```bash
-bash tools/run-python biot/verify_biot.py all
+bash tools/run-python coupled-poroelasticity/verify_biot.py all
 ```
 
 The scripts print the results and save plots. The full study takes longer than the individual checks because it runs many cases. The parameter scan deliberately includes difficult choices that may be reported as `NC`.
@@ -97,26 +97,30 @@ The `tools/run-python` launcher keeps foam-extend's libraries from interfering w
 The coupled Python reference implementation can run on its own:
 
 ```bash
-python3 biot/verify_biot.py check --solver reference
-python3 biot/verify_biot.py all --solver reference
+python3 coupled-poroelasticity/verify_biot.py check --solver reference
+python3 coupled-poroelasticity/verify_biot.py all --solver reference
 ```
 
 Reference results and C++ results are saved in separate directories so one cannot overwrite the other.
 
 ## Where to find things
 
+The examples are grouped by what they solve: `pressure-diffusion/` contains the
+pressure-only problem, and `coupled-poroelasticity/` contains the pressure and
+displacement problem. Each folder has its own solver, case, tests, and results.
+
 | Location | Contents |
 | --- | --- |
-| `solver/`, `case/` | Pressure-only solver and example case |
-| `verify.py`, `validation/` | Pressure-only verification script, analytical solution, and plots |
-| `biot/solver/`, `biot/case/` | Coupled solver and example case |
-| `biot/reference/biot_ref.py` | Analytical solution and Python implementation of the coupled discretization |
-| `biot/verify_biot.py` | Coupled-solver comparisons, refinement studies, and reliability checks |
-| `biot/validation/biotConsolidationFoam/` | Results from the revised C++ solver |
-| `biot/validation/reference/` | Results from the Python reference |
-| `biot/reliability-all.log` | Output from the completed C++ verification suite |
+| `pressure-diffusion/solver/`, `pressure-diffusion/case/` | Pressure-only solver and example case |
+| `pressure-diffusion/verify.py`, `pressure-diffusion/validation/` | Pressure-only verification script, analytical solution, and plots |
+| `coupled-poroelasticity/solver/`, `coupled-poroelasticity/case/` | Coupled solver and example case |
+| `coupled-poroelasticity/reference/biot_ref.py` | Analytical solution and Python implementation of the coupled discretization |
+| `coupled-poroelasticity/verify_biot.py` | Coupled-solver comparisons, refinement studies, and reliability checks |
+| `coupled-poroelasticity/validation/biotConsolidationFoam/` | Results from the revised C++ solver |
+| `coupled-poroelasticity/validation/reference/` | Results from the Python reference |
+| `coupled-poroelasticity/reliability-all.log` | Output from the completed C++ verification suite |
 
-The [reliability notes](RELIABILITY.md) explain the residual definitions, conservation accounting, and pass/fail tolerances. Earlier C++ plots directly in `biot/validation/` are retained as baseline results.
+The [reliability notes](RELIABILITY.md) explain the residual definitions, conservation accounting, and pass/fail tolerances. Earlier C++ plots directly in `coupled-poroelasticity/validation/` are retained as baseline results.
 
 ## Scope
 
@@ -126,4 +130,4 @@ It does not model fracture growth, contact, nonlinear material behavior, or gene
 
 ## Background
 
-The project uses Terzaghi's consolidation solution, Biot's linear poroelasticity equations, and the fixed-stress splitting approach studied by Kim, Tchelepi, and Juanes. Further references and the discretization discussion are in the [coupled-solver notes](biot/README.md).
+The project uses Terzaghi's consolidation solution, Biot's linear poroelasticity equations, and the fixed-stress splitting approach studied by Kim, Tchelepi, and Juanes. Further references and the discretization discussion are in the [coupled-solver notes](coupled-poroelasticity/README.md).
