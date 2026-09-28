@@ -21,7 +21,8 @@ every result can be checked against a known answer.
 | Exact reference solution (`validation/terzaghi_analytical.py`) | Checked (average consolidation matches the short-time limit 2√(Tv/π)) |
 | Automated regression check (`verify.py check`) | Passes on the correct case; fails on a deliberately wrong coefficient |
 | Custom solver `poroConsolidationFoam` | Compiled and verified on foam-extend 4.1; matches stock `laplacianFoam` (OpenFOAM v1912) to every printed digit |
-| Phase 2: two-way pressure–displacement coupling | Planned, not started |
+| Phase 2 baseline: pressure–displacement coupling | Compiled and checked on foam-extend 4.1; supplied run log in `biot/phase2-all.log` |
+| Phase 2 reliability revision | Python reference checks run here; revised C++ awaits workstation rebuild and checks |
 
 ## The physics
 
@@ -43,7 +44,7 @@ folded into the coefficient `cv`, and there's no separate displacement
 field. It has an exact Fourier-series solution (Terzaghi, 1943), which makes
 it the standard first benchmark for poromechanics codes.
 
-**Phase 2 (planned):** 1D Biot poroelasticity with separate pressure and
+**Phase 2 (`biot/`):** 1D Biot poroelasticity with separate pressure and
 displacement fields, coupled with the fixed-stress split scheme (Kim,
 Tchelepi & Juanes, 2011), and verified against the same Terzaghi solution
 plus a convergence study of the coupling iterations.
@@ -54,12 +55,12 @@ The results below come from `poroConsolidationFoam` compiled and run on
 foam-extend 4.1. The exact solution is evaluated at the cell centres read
 from the mesh files and at the solver's actual output times.
 
-As an independent cross-check, the same case was also run through OpenFOAM's
+As a framework consistency check, the same case was also run through OpenFOAM's
 stock `laplacianFoam` on OpenFOAM v1912. That solver discretizes the same
 equation, `ddt(u) = laplacian(cv, u)`, in the same way, so the two should
 agree, and they do: every error norm and consolidation value below is
 identical to all printed digits across the two solvers and OpenFOAM
-versions.
+versions. Both share framework machinery; this agreement alone is not independent verification.
 
 ## Results
 
@@ -148,11 +149,26 @@ the BLAS library the system numpy needs. Run Python without
 OpenFOAM commands it launches:
 
 ```bash
-alias py='env -u LD_LIBRARY_PATH -u WM_PROJECT_DIR OF_BASHRC=$HOME/foam/foam-extend-4.1/etc/bashrc python3'
-py verify.py check
+bash tools/run-python verify.py check
 ```
 
-Adjust the `bashrc` path to your installation.
+The launcher uses the sourced `WM_PROJECT_DIR/etc/bashrc`, or an explicit `OF_BASHRC`. See [the reliability revision](RELIABILITY.md) for Phase 2 commands and pass/fail criteria.
+
+## Phase 2 verification
+
+From the repository root, after sourcing foam-extend:
+
+```bash
+(cd biot/solver && wmake)
+bash tools/run-python biot/verify_biot.py check
+bash tools/run-python biot/verify_biot.py reliability
+# Full studies, including intentional nonconvergence in the parameter scan:
+bash tools/run-python biot/verify_biot.py all
+```
+
+`requirements.txt` lists the Python dependencies. The baseline C++ figures remain
+in `biot/validation/`; new outputs are separated into `reference/` and
+`biotConsolidationFoam/` subdirectories. See [RELIABILITY.md](RELIABILITY.md).
 
 ## References
 

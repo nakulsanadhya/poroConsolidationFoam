@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -e
+# Preserve how to re-source OpenFOAM in child processes before clearing its libs.
+if [[ -z "${OF_BASHRC:-}" && -n "${WM_PROJECT_DIR:-}" ]]; then
+    export OF_BASHRC="$WM_PROJECT_DIR/etc/bashrc"
+fi
+# Dense reference matrices otherwise suffer severe BLAS oversubscription.
+export OPENBLAS_NUM_THREADS="${OPENBLAS_NUM_THREADS:-1}"
+export OMP_NUM_THREADS="${OMP_NUM_THREADS:-1}"
+exec env -u LD_LIBRARY_PATH python3 "$@"

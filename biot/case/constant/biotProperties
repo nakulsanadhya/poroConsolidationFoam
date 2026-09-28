@@ -1,0 +1,43 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  biotConsolidationFoam example case: 1D Biot consolidation
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      biotProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Poroelastic parameters (SI units). Illustrative values chosen so that
+// cv = mobility / (1/M + alpha^2/Mc) = 0.01 m^2/s, matching Phase 1:
+//   p0 = alpha M sigma0 / (Mc + alpha^2 M) = 0.7018 sigma0
+//   undrained settlement s0 = sigma0 H / (Mc + alpha^2 M) = 4.386 mm
+//   final settlement   s_inf = sigma0 H / Mc              = 10.0 mm
+
+Mc              Mc [1 -1 -2 0 0 0 0] 1e8;           // drained constrained modulus K + 4G/3
+M               M [1 -1 -2 0 0 0 0] 2e8;            // Biot modulus
+alpha           alpha [0 0 0 0 0 0 0] 0.8;          // Biot coefficient
+mobility        mobility [-1 3 1 0 0 0 0] 1.14e-10; // permeability / viscosity, k/mu
+sigma0          sigma0 [1 -1 -2 0 0 0 0] 1e6;       // compressive load on loadedPatch
+
+// The loaded boundary must also be drained (p = 0 there); its traction
+// is imposed by setting the normal gradient of w to sigma0/Mc.
+loadedPatch     drained;
+
+// Start from the instantaneous undrained response, p = p0 everywhere
+// except the drained boundary (overrides the internal field of 0/p).
+undrainedInitialState yes;
+
+// Pressure stabilization -d/dt div(tau grad p), tau = alpha^2 h^2/(4 Mc)
+stabilization   yes;
+
+// Fixed-stress split: beta = fixedStressFactor * alpha^2 / Mc
+fixedStressFactor        1.0;
+fixedStressTolerance     1e-10;     // on max|p - p_prev| / p0
+maxFixedStressIterations 1000;
+equationTolerance       1e-8; // normalized coupled equation residuals
+
+// ************************************************************************* //

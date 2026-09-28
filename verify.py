@@ -23,6 +23,7 @@ tries to source a known bashrc (OF_BASHRC env var, else the Debian path).
 """
 
 import argparse
+import shlex
 import os
 import re
 import shutil
@@ -52,11 +53,16 @@ CV = 0.01    # coefficient of consolidation [m^2/s], must match transportPropert
 # --------------------------------------------------------------------------
 
 def _shell_prefix():
+    explicit = os.environ.get("OF_BASHRC")
+    if explicit:
+        if not Path(explicit).is_file():
+            raise FileNotFoundError(f"OF_BASHRC does not exist: {explicit}")
+        return f"source {shlex.quote(explicit)} >/dev/null 2>&1 && "
     if os.environ.get("WM_PROJECT_DIR"):
         return ""
-    for cand in (os.environ.get("OF_BASHRC"), "/usr/share/openfoam/etc/bashrc"):
-        if cand and Path(cand).exists():
-            return f"source {cand} >/dev/null 2>&1; "
+    fallback = "/usr/share/openfoam/etc/bashrc"
+    if Path(fallback).exists():
+        return f"source {shlex.quote(fallback)} >/dev/null 2>&1 && "
     return ""
 
 

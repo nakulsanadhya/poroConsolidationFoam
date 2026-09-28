@@ -16,3 +16,14 @@ case/log.*
 solver/Make/linux64*/
 solver/*.dep
 solver/lnInclude/
+
+# Phase 2 build and generated cases
+biot/runs/
+biot/solver/Make/linux*/
+biot/solver/*.dep
+biot/solver/lnInclude/
+biot/case/constant/polyMesh/*
+!biot/case/constant/polyMesh/blockMeshDict
+biot/case/[1-9]*/
+biot/case/0.*/
+biot/case/log.*

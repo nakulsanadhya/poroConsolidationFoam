@@ -1,0 +1,25 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  biotConsolidationFoam example case: 1D Biot consolidation
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+    "(p|w)"
+    {
+        solver          PCG;
+        preconditioner  DIC;
+        tolerance       1e-13;
+        relTol          0;
+    }
+}
+
+// ************************************************************************* //
