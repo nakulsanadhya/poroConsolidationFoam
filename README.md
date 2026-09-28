@@ -1,181 +1,129 @@
 # poroConsolidationFoam
 
-A from-scratch OpenFOAM solver for poroelastic consolidation, built as a
-standalone application on the open-source OpenFOAM/foam-extend framework
-and verified against an exact solution.
+Two finite-volume solvers for one-dimensional soil and rock consolidation, built with foam-extend 4.1. The first solves for pore pressure. The second solves for pressure and displacement together.
 
-## Why this exists
+This project grew out of my PhD work on fluid flow and rock deformation in hydraulic fracturing. I wanted a small, public example where I could work through the equations, implement the coupling, and check the results against an analytical solution.
 
-My PhD research (UT Austin, Sharma group) uses coupled geomechanics and fluid
-flow simulation for hydraulic fracturing. This project is an independent,
-public demonstration of the same class of numerical methods (finite-volume
-discretization of flow in deformable porous media) on a small problem where
-every result can be checked against a known answer.
+## What the solvers do
 
-## Status
+When a saturated porous material is loaded, the pore fluid initially carries part of the load. As fluid drains out, pore pressure falls and the solid deforms. This project follows that process in a column with a drained, loaded top and a fixed, impermeable base.
 
-| Component | Status |
-|---|---|
-| Case setup (mesh, boundary conditions, schemes, output times) | Verified on foam-extend 4.1 and OpenFOAM v1912 |
-| Numerical method (implicit Euler + finite-volume Laplacian) | Verified: 2nd order in space, 1st order in time |
-| Exact reference solution (`validation/terzaghi_analytical.py`) | Checked (average consolidation matches the short-time limit 2√(Tv/π)) |
-| Automated regression check (`verify.py check`) | Passes on the correct case; fails on a deliberately wrong coefficient |
-| Custom solver `poroConsolidationFoam` | Compiled and verified on foam-extend 4.1; matches stock `laplacianFoam` (OpenFOAM v1912) to every printed digit |
-| Phase 2 baseline: pressure–displacement coupling | Compiled and checked on foam-extend 4.1; supplied run log in `biot/phase2-all.log` |
-| Phase 2 reliability revision | Compiled and verified on foam-extend 4.1; check, reliability and full studies passed on 2026-09-27 |
+| Solver | What it calculates |
+| --- | --- |
+| `poroConsolidationFoam` | Pressure dissipation using Terzaghi's consolidation equation. The solid response is included in the consolidation coefficient; displacement is not solved separately. |
+| `biotConsolidationFoam` | Pore pressure and vertical displacement using the coupled Biot equations. It alternates between flow and mechanics solves using a fixed-stress split. |
 
-## The physics
-
-**Phase 1 (this repo):** Terzaghi's 1D consolidation problem. A saturated
-porous column is loaded instantaneously; the excess pore pressure `u`
-dissipates by Darcy flow toward a drained boundary:
-
-```
-du/dt = cv * d2u/dz2          0 <= z <= H
-
-u(0, t)     = 0      drained boundary
-du/dz(H, t) = 0      impermeable boundary
-u(z, 0)     = u0     instantaneous load
-cv = k / (mv * gammaW)   coefficient of consolidation
-```
-
-Phase 1 is the *uncoupled* consolidation equation: the solid's response is
-folded into the coefficient `cv`, and there's no separate displacement
-field. It has an exact Fourier-series solution (Terzaghi, 1943), which makes
-it the standard first benchmark for poromechanics codes.
-
-**Phase 2 (`biot/`):** 1D Biot poroelasticity with separate pressure and
-displacement fields, coupled with the fixed-stress split scheme (Kim,
-Tchelepi & Juanes, 2011), and verified against the same Terzaghi solution
-plus a convergence study of the coupling iterations.
-
-## Verification approach
-
-The results below come from `poroConsolidationFoam` compiled and run on
-foam-extend 4.1. The exact solution is evaluated at the cell centres read
-from the mesh files and at the solver's actual output times.
-
-As a framework consistency check, the same case was also run through OpenFOAM's
-stock `laplacianFoam` on OpenFOAM v1912. That solver discretizes the same
-equation, `ddt(u) = laplacian(cv, u)`, in the same way, so the two should
-agree, and they do: every error norm and consolidation value below is
-identical to all printed digits across the two solvers and OpenFOAM
-versions. Both share framework machinery; this agreement alone is not independent verification.
+Both solvers have been compiled and tested on foam-extend 4.1. The tests cover analytical agreement and mesh and time-step refinement. The coupled solver also has checks for equation residuals, fluid balance, restart behavior, and failure to converge.
 
 ## Results
 
-**Solver vs exact solution** (`poroConsolidationFoam`, foam-extend 4.1, 100 cells, Δt = 0.25 s):
+The coupled solver reproduces the analytical pressure and settlement histories. For the default case, the top settles from an instantaneous undrained value of 4.39 mm toward a drained value of 10 mm.
 
-![Solver vs analytical](validation/solver_vs_analytical.png)
+![Pressure, displacement and settlement compared with the analytical solution](biot/validation/biotConsolidationFoam/biot_vs_exact.png)
 
-| Tv | L2 error | L∞ error | U numerical | U exact |
-|---|---|---|---|---|
-| 0.05 | 3.65e-3 | 6.95e-3 | 0.25071 | 0.25231 |
-| 0.1 | 2.09e-3 | 3.38e-3 | 0.35568 | 0.35682 |
-| 0.2 | 9.57e-4 | 1.32e-3 | 0.50319 | 0.50409 |
-| 0.4 | 1.03e-3 | 1.44e-3 | 0.69695 | 0.69788 |
-| 0.8 | 7.67e-4 | 1.08e-3 | 0.88671 | 0.88740 |
+For 100 cells and a time step of 0.25 s:
 
-At this resolution the error is dominated by the time step (see below).
+| Check | Result |
+| --- | --- |
+| Largest pressure error across the five tabulated times | 0.695% of the initial pressure |
+| Largest displacement error across those times | 0.0882% of the final settlement |
+| Difference from the Python reference implementation | 1.66 × 10⁻¹⁰ for normalized pressure; 6.03 × 10⁻¹¹ for normalized displacement |
+| Coupling iterations per time step | 3.2 on average; 6 at most |
+| Largest normalized cumulative fluid-balance error | 2.33 × 10⁻¹⁰, including the stabilization contribution |
 
-**Observed orders of accuracy** (`poroConsolidationFoam`, foam-extend 4.1, L2 error at Tv = 0.2):
+Refining the mesh gives approximately second-order accuracy in space. Refining the time step gives first-order accuracy in time. The coupled solver's mesh study uses Richardson extrapolation in time to separate spatial error from time-step error.
 
-![Convergence](validation/convergence.png)
+![Mesh and time-step refinement for pressure and displacement](biot/validation/biotConsolidationFoam/biot_convergence.png)
 
-| Cells | L2 error | Order | | Δt [s] | L2 error | Order |
-|---|---|---|---|---|---|---|
-| 10 | 1.174e-3 | | | 2 | 7.686e-3 | |
-| 20 | 2.931e-4 | 2.00 | | 1 | 3.811e-3 | 1.01 |
-| 40 | 7.378e-5 | 1.99 | | 0.5 | 1.896e-3 | 1.01 |
-| 80 | 1.900e-5 | 1.96 | | 0.25 | 9.459e-4 | 1.00 |
-| 160 | 5.306e-6 | 1.84 | | 0.125 | 4.724e-4 | 1.00 |
+The tests also compare the fixed-stress solution with a monolithic reference solve, check that restarting reproduces an uninterrupted run, and confirm that failed iterations and incomplete results are rejected. These results establish performance for the tested one-dimensional cases, rather than for general poromechanics problems.
 
-Second order in space and first order in time, as expected for a central
-finite-volume Laplacian with implicit Euler. The mesh study uses Δt = 2e-4 s
-so the time error stays below the space error; at 160 cells the residual
-time error (about 8e-7) starts to show, which explains the dip to 1.84.
+## Investigating pressure oscillations
 
-## Repository layout
+The most interesting part of the project was testing the coupled solver with nearly incompressible constituents and small time steps.
 
-```
-solver/
-  poroConsolidationFoam.C    solver main loop
-  createFields.H             reads field u and coefficient cv
-  Make/files, Make/options   build configuration
-case/
-  constant/polyMesh/blockMeshDict   mesh definition
-  constant/transportProperties      coefficient of consolidation cv
-  system/                           controlDict, fvSchemes, fvSolution
-  0/u                               initial and boundary conditions
-validation/
-  terzaghi_analytical.py     exact series solution (+ standalone plots)
-verify.py                    comparison, convergence studies, regression check
-```
+With pressure and displacement stored at cell centres, the discrete coupling responds weakly to rapidly alternating pressure patterns. In the tested cases, this produced pressure oscillations and slow fixed-stress convergence. Adding a pressure stabilization term suppressed the oscillations and reduced the iteration count.
 
-## Building and running
+![Early-time pressure profiles with and without stabilization](biot/validation/biotConsolidationFoam/biot_oscillations.png)
 
-Requires a sourced foam-extend or OpenFOAM environment.
+In one early-time test, the unstabilized pressure exceeded the initial pressure by 12.5%. Across the stabilized early-time tests, the overshoot was about 1.7 × 10⁻¹¹ or less of the initial pressure. In a separate three-step comparison, stabilization reduced the average iteration count from 758.3 to 18.0.
+
+Some choices of the fixed-stress parameter still failed to converge within the iteration limit. Those results are marked `NC` in the parameter study; the solver stops rather than continuing with an unconverged solution.
+
+This is an investigation of a known class of discretization problems, not a claim of a new stabilization method. The derivation and its limits are described in the [coupled-solver notes](biot/README.md).
+
+## Build and run
+
+You need a working foam-extend 4.1 installation and Python 3 with NumPy, SciPy, and Matplotlib. The Python dependencies are listed in `requirements.txt`.
+
+Source your foam-extend environment, then run these commands from the repository root.
+
+Build both solvers:
 
 ```bash
-cd solver && wmake && cd ..
-
-python3 verify.py check                          # pass/fail against the exact solution
-python3 verify.py compare                        # isochrones + error table
-python3 verify.py convergence                    # mesh and time-step studies
-
-python3 verify.py check --solver laplacianFoam   # same checks via the stock solver
+(cd solver && wmake)
+(cd biot/solver && wmake)
 ```
 
-`verify.py` copies `case/` into `runs/` for every run, so the template stays
-clean. To run the case by hand instead:
-
-```bash
-cd case
-blockMesh
-poroConsolidationFoam
-```
-
-### Notes for foam-extend 4.1
-
-**Mesh dictionary location.** foam-extend reads `blockMeshDict` from
-`constant/polyMesh/`, which is where it lives in this repo. Newer OpenFOAM
-versions expect `system/` but still fall back to `constant/polyMesh/` with a
-deprecation warning; `verify.py` also places a copy in `system/` for them.
-
-**numpy import error (`undefined symbol: cblas_sgemm`).** The foam-extend
-environment puts its own libraries first on `LD_LIBRARY_PATH`, which hides
-the BLAS library the system numpy needs. Run Python without
-`LD_LIBRARY_PATH` and let `verify.py` re-source foam-extend for the
-OpenFOAM commands it launches:
+Check the pressure-only solver against the analytical solution:
 
 ```bash
 bash tools/run-python verify.py check
 ```
 
-The launcher uses the sourced `WM_PROJECT_DIR/etc/bashrc`, or an explicit `OF_BASHRC`. See [the reliability revision](RELIABILITY.md) for Phase 2 commands and pass/fail criteria.
-
-## Phase 2 verification
-
-From the repository root, after sourcing foam-extend:
+Check the coupled solver against the analytical solution and the Python reference, including equation residuals and fluid balance:
 
 ```bash
-(cd biot/solver && wmake)
 bash tools/run-python biot/verify_biot.py check
+```
+
+Check restart behavior, agreement with a monolithic solve, and rejection of failed or invalid runs:
+
+```bash
 bash tools/run-python biot/verify_biot.py reliability
-# Full studies, including intentional nonconvergence in the parameter scan:
+```
+
+Run the full coupled-solver study, including mesh refinement, time-step refinement, pressure oscillations, and the fixed-stress parameter scan:
+
+```bash
 bash tools/run-python biot/verify_biot.py all
 ```
 
-`requirements.txt` lists the Python dependencies. The baseline C++ figures remain
-in `biot/validation/`; new outputs are separated into `reference/` and
-`biotConsolidationFoam/` subdirectories. See [RELIABILITY.md](RELIABILITY.md).
+The scripts print the results and save plots. The full study takes longer than the individual checks because it runs many cases. The parameter scan deliberately includes difficult choices that may be reported as `NC`.
 
-## References
+The `tools/run-python` launcher keeps foam-extend's libraries from interfering with NumPy, while restoring the OpenFOAM environment for solver commands. It uses the sourced installation's `WM_PROJECT_DIR/etc/bashrc`, or the path set in `OF_BASHRC`.
 
-- Terzaghi, K. (1943). *Theoretical Soil Mechanics.* Wiley.
-- Biot, M. A. (1941). General theory of three-dimensional consolidation.
-  *Journal of Applied Physics*, 12(2), 155–164.
-- Kim, J., Tchelepi, H. A., & Juanes, R. (2011). Stability and convergence of
-  sequential methods for coupled flow and geomechanics: Fixed-stress and
-  fixed-strain splits. *Computer Methods in Applied Mechanics and
-  Engineering*, 200(13–16), 1591–1606.
+### Without OpenFOAM
+
+The coupled Python reference implementation can run on its own:
+
+```bash
+python3 biot/verify_biot.py check --solver reference
+python3 biot/verify_biot.py all --solver reference
+```
+
+Reference results and C++ results are saved in separate directories so one cannot overwrite the other.
+
+## Where to find things
+
+| Location | Contents |
+| --- | --- |
+| `solver/`, `case/` | Pressure-only solver and example case |
+| `verify.py`, `validation/` | Pressure-only verification script, analytical solution, and plots |
+| `biot/solver/`, `biot/case/` | Coupled solver and example case |
+| `biot/reference/biot_ref.py` | Analytical solution and Python implementation of the coupled discretization |
+| `biot/verify_biot.py` | Coupled-solver comparisons, refinement studies, and reliability checks |
+| `biot/validation/biotConsolidationFoam/` | Results from the revised C++ solver |
+| `biot/validation/reference/` | Results from the Python reference |
+| `biot/reliability-all.log` | Output from the completed C++ verification suite |
+
+The [reliability notes](RELIABILITY.md) explain the residual definitions, conservation accounting, and pass/fail tolerances. Earlier C++ plots directly in `biot/validation/` are retained as baseline results.
+
+## Scope
+
+The coupled solver is deliberately restricted to a uniform, orthogonal, one-dimensional column with constant material properties and the stated loading and drainage conditions. It runs in serial and rejects unsupported meshes, boundary conditions, and numerical schemes.
+
+It does not model fracture growth, contact, nonlinear material behavior, or general two- or three-dimensional deformation. A possible next step is Mandel's two-dimensional consolidation problem, which would require a separate implementation and verification effort.
+
+## Background
+
+The project uses Terzaghi's consolidation solution, Biot's linear poroelasticity equations, and the fixed-stress splitting approach studied by Kim, Tchelepi, and Juanes. Further references and the discretization discussion are in the [coupled-solver notes](biot/README.md).
