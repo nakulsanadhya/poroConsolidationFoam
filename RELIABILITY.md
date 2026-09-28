@@ -7,9 +7,9 @@ Its supplied `biot/phase2-all.log` and four figures directly in `biot/validation
 are preserved unchanged. They verify the baseline, not this revised C++ source.
 
 This revision's Python `check`, `reliability` and full `all` study passed locally.
-See `biot/validation/reference/reliability-all.log`. The revised C++ code could
-not be compiled here because foam-extend is unavailable. Workstation gates below
-remain required; source inspection is not a substitute for those runs.
+See `biot/validation/reference/reliability-all.log`. The revised C++ solver subsequently compiled and passed check, reliability,
+and all studies on Nakul's foam-extend 4.1 workstation on 2026-09-27.
+See `biot/reliability-all.log` and `biot/validation/biotConsolidationFoam/`.
 
 | Evidence | Result |
 | --- | --- |
@@ -20,7 +20,10 @@ remain required; source inspection is not a substitute for those runs.
 | Revised Python restart / continuous run | identical output arrays in the tested case |
 | Revised Python refinement studies | approximately order 2 in space and 1 in time |
 | Failure injection | iteration limit, NaN, missing times, missing diagnostics and corrupted balance rejected |
-| Revised C++ build, restart I/O and mesh rejection | pending workstation run |
+| Revised C++ build, restart I/O and mesh rejection | Passed on foam-extend 4.1 |
+| Revised C++ default coupled residual maxima | mass 5.890e-12; mechanics 1.720e-10 |
+| Revised C++ maximum cumulative normalized fluid imbalance | 2.328e-10 |
+| Revised C++ refinement studies | approximately order 2 in space and 1 in time |
 
 ## What changed
 
@@ -132,7 +135,8 @@ stabilization is implemented.
 
 ## Report corrections to carry into the separate narrative
 
-- Phase 2's baseline C++ is now compiled and checked. The revised C++ is pending.
+- Both the baseline and revised Phase 2 C++ solver have compiled and passed
+  their specified verification checks on foam-extend 4.1.
 - In the supplied early-time C++ table, stabilization required up to 26 iterations;
   the different default-factor scan had mean counts up to 20. Do not merge them.
 - Iteration-limit entries are nonconvergence, not successful iteration counts.

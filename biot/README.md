@@ -11,14 +11,15 @@ against a separate reference implementation of the same discretization.
 | Formulation, exact solution (p, w, settlement) | Derived and checked (series vs short-time erf form agree to 1e-15) |
 | Discretization analysis (strain defect, stabilization) | Analytical identity supported by numerical checks; uniform 1D grid and stated BCs only |
 | Reference implementation (`reference/biot_ref.py`) | Verified: 2nd order in space, 1st order in time, for p and w |
-| OpenFOAM solver `biotConsolidationFoam` | Baseline compiled and checked on foam-extend 4.1; revised reliability code needs a new compile/run |
-| `verify_biot.py check` | Passes with the reference backend; catches a wrong mobility and a 1e-4 implementation discrepancy |
+| OpenFOAM solver `biotConsolidationFoam` | Baseline and reliability revision compiled and verified on foam-extend 4.1 |
+| `verify_biot.py check` | Passes with both backends; revised C++ also passes residual, conservation, restart and failure-handling checks |
 
 The existing figures directly in `validation/` and `phase2-all.log` came from
 Nakul's baseline C++ run. They are preserved. New results go into
 `validation/reference/` or `validation/biotConsolidationFoam/`; the reference
-backend never overwrites C++ figures. The reliability revision's C++ results
-remain pending until rebuilt and checked on the workstation.
+backend never overwrites C++ figures. The reliability revision passed check, reliability and all studies on the
+workstation on 2026-09-27. Results are in
+`validation/biotConsolidationFoam/`; the full log is `reliability-all.log`.
 
 ## Physics
 
@@ -86,8 +87,9 @@ up to 20. Second-order spatial accuracy was observed in the refinement study.
 The fixed-stress parameter `beta = alpha^2/Mc` is the robust default. The
 scan shows the iteration count rising steeply as `beta` approaches
 `alpha^2/(2 Mc)` in this test. This observed behavior should not be presented
-as a universal sharp convergence threshold for every discretization or parameter set; and an optimum between 0.6 and 1 × `alpha^2/Mc`
-depending on the time step.
+as a universal sharp convergence threshold for every discretization or parameter set.
+Among the tested factors, the fastest lies between 0.6 and 1 times
+`alpha^2/Mc`, depending on the time step.
 
 ## Baseline results (C++ run supplied by Nakul; also reproduced by the reference)
 

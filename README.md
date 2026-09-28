@@ -22,7 +22,7 @@ every result can be checked against a known answer.
 | Automated regression check (`verify.py check`) | Passes on the correct case; fails on a deliberately wrong coefficient |
 | Custom solver `poroConsolidationFoam` | Compiled and verified on foam-extend 4.1; matches stock `laplacianFoam` (OpenFOAM v1912) to every printed digit |
 | Phase 2 baseline: pressure–displacement coupling | Compiled and checked on foam-extend 4.1; supplied run log in `biot/phase2-all.log` |
-| Phase 2 reliability revision | Python reference checks run here; revised C++ awaits workstation rebuild and checks |
+| Phase 2 reliability revision | Compiled and verified on foam-extend 4.1; check, reliability and full studies passed on 2026-09-27 |
 
 ## The physics
 
